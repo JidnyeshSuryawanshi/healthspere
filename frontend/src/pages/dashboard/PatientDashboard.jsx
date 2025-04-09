@@ -15,6 +15,8 @@ const PatientDashboard = () => {
   const [activeTab, setActiveTab] = useState('appointments');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showAppointmentDetails, setShowAppointmentDetails] = useState(false);
+  const [selectedPrescription, setSelectedPrescription] = useState(null);
+  const [showPrescriptionDetails, setShowPrescriptionDetails] = useState(false);
   
   // Appointment form state
   const [appointmentForm, setAppointmentForm] = useState({
@@ -448,6 +450,173 @@ const PatientDashboard = () => {
     }
   };
   
+  // Function to handle viewing prescription details
+  const handleViewPrescriptionDetails = (prescription) => {
+    setSelectedPrescription(prescription);
+    setShowPrescriptionDetails(true);
+  };
+
+  // Function to print prescription details
+  const handlePrintPrescription = (prescription) => {
+    try {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Prescription #${prescription.id}</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 20px;
+                padding-bottom: 20px;
+                border-bottom: 1px solid #eaeaea;
+              }
+              .clinic-name {
+                color: #0d9488;
+                font-size: 24px;
+                margin: 0;
+              }
+              .prescription-title {
+                font-size: 20px;
+                margin: 30px 0 15px;
+              }
+              .section {
+                margin-bottom: 20px;
+                padding: 15px;
+                background-color: #f9fafb;
+                border-radius: 5px;
+              }
+              .section-title {
+                margin-top: 0;
+                font-size: 16px;
+                color: #666;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+              }
+              .label {
+                font-weight: bold;
+                margin-right: 10px;
+              }
+              .footer {
+                margin-top: 40px;
+                font-size: 12px;
+                text-align: center;
+                color: #666;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+              }
+              table, th, td {
+                border: 1px solid #ddd;
+              }
+              th {
+                background-color: #0d9488;
+                color: white;
+                text-align: left;
+                padding: 10px;
+              }
+              td {
+                padding: 8px;
+                font-size: 14px;
+              }
+              tr:nth-child(even) {
+                background-color: #f5f5f5;
+              }
+              @media print {
+                body {
+                  padding: 0;
+                }
+                button {
+                  display: none;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1 class="clinic-name">Medical Clinic</h1>
+              <p>Professional Healthcare Services</p>
+            </div>
+            
+            <h2 class="prescription-title">Prescription #${prescription.id}</h2>
+            
+            <div class="section">
+              <h3 class="section-title">Patient Information</h3>
+              <p><span class="label">Name:</span> ${patient.firstName} ${patient.lastName}</p>
+              <p><span class="label">Patient ID:</span> ${patient.id}</p>
+              <p><span class="label">Email:</span> ${patient.email}</p>
+            </div>
+            
+            <div class="section">
+              <h3 class="section-title">Doctor Information</h3>
+              <p><span class="label">Name:</span> ${prescription.doctorName}</p>
+              <p><span class="label">Specialization:</span> ${prescription.doctorSpecialization}</p>
+            </div>
+            
+            <div class="section">
+              <h3 class="section-title">Prescription Details</h3>
+              <p><span class="label">Date:</span> ${new Date(prescription.date).toLocaleDateString()}</p>
+              <p><span class="label">Diagnosis:</span> ${prescription.diagnosis}</p>
+              <p><span class="label">Instructions:</span> ${prescription.instructions || 'No specific instructions provided.'}</p>
+            </div>
+            
+            <div class="section">
+              <h3 class="section-title">Medications</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Medication</th>
+                    <th>Dosage</th>
+                    <th>Frequency</th>
+                    <th>Duration</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${prescription.medications.map(med => `
+                    <tr>
+                      <td>${med.name}</td>
+                      <td>${med.dosage}</td>
+                      <td>${med.frequency || 'As needed'}</td>
+                      <td>${med.duration || 'As required'}</td>
+                      <td>${med.notes || '-'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="footer">
+              <p>Take medications as prescribed. Contact your doctor if you experience any side effects.</p>
+              <p>© ${new Date().getFullYear()} Medical Clinic. All rights reserved.</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+              <button onclick="window.print();" style="padding: 10px 20px; background-color: #0d9488; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Print Prescription
+              </button>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      
+    } catch (err) {
+      console.error('Error printing prescription:', err);
+      alert('Failed to print prescription details. Please try again.');
+    }
+  };
+  
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
@@ -676,13 +845,13 @@ const PatientDashboard = () => {
                     
                     <div className="border-t border-gray-200 p-4 bg-gray-50">
                       <button
-                        onClick={() => handleDownloadPDF(prescription)}
+                        onClick={() => handleViewPrescriptionDetails(prescription)}
                         className="w-full flex items-center justify-center px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Download Prescription Report
+                        View Details
                       </button>
                     </div>
                   </div>
@@ -928,6 +1097,149 @@ const PatientDashboard = () => {
                   View Prescription
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Prescription Details Modal */}
+      {showPrescriptionDetails && selectedPrescription && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Prescription Details</h3>
+              <button 
+                onClick={() => setShowPrescriptionDetails(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <span className="text-2xl">&times;</span>
+              </button>
+            </div>
+            
+            <div className="bg-teal-50 p-4 rounded-lg mb-6">
+              <div className="flex justify-between items-center">
+                <h4 className="font-medium text-teal-900">Prescription #{selectedPrescription.id}</h4>
+                <span className="text-sm text-teal-700">
+                  {new Date(selectedPrescription.date).toLocaleDateString()}
+                </span>
+              </div>
+              <p className="text-sm text-teal-800 mt-1">
+                {selectedPrescription.doctorName} • {selectedPrescription.doctorSpecialization}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                  Patient Information
+                </h4>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="font-medium">{patient.firstName} {patient.lastName}</p>
+                  <p className="text-sm text-gray-600">Patient ID: {patient.id}</p>
+                  <p className="text-sm text-gray-600">{patient.email}</p>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                  Doctor Information
+                </h4>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="font-medium">{selectedPrescription.doctorName}</p>
+                  <p className="text-sm text-teal-600">{selectedPrescription.doctorSpecialization}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">Diagnosis</h4>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm">{selectedPrescription.diagnosis}</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">Instructions</h4>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm">{selectedPrescription.instructions || 'No specific instructions provided.'}</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">Medications</h4>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Medication
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Dosage
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Frequency
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Duration
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Notes
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {selectedPrescription.medications.map((med, idx) => (
+                      <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {med.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {med.dosage}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {med.frequency || 'As needed'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {med.duration || 'As required'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {med.notes || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowPrescriptionDetails(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Close
+              </button>
+              
+              <button
+                onClick={() => handlePrintPrescription(selectedPrescription)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print
+              </button>
+              
+              <button
+                onClick={() => handleDownloadPDF(selectedPrescription)}
+                className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download PDF
+              </button>
             </div>
           </div>
         </div>
