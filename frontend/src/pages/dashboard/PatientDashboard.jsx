@@ -211,30 +211,44 @@ const PatientDashboard = () => {
       doc.setTextColor(0, 0, 0);
       doc.text('Diagnosis:', 14, 76);
       
+      // Handle long text for diagnosis with word wrap
+      const diagnosisLines = doc.splitTextToSize(prescription.diagnosis, 180);
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 60);
-      doc.text(prescription.diagnosis, 14, 83);
+      doc.text(diagnosisLines, 14, 83);
+      
+      // Adjust position based on diagnosis text length
+      let yPosition = 83 + (diagnosisLines.length * 5);
       
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
-      doc.text('Instructions:', 14, 93);
+      doc.text('Instructions:', 14, yPosition + 10);
       
+      // Handle long text for instructions with word wrap
+      const instructionsText = prescription.instructions || 'None provided';
+      const instructionsLines = doc.splitTextToSize(instructionsText, 180);
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 60);
-      doc.text(prescription.instructions || 'None provided', 14, 100);
+      doc.text(instructionsLines, 14, yPosition + 17);
+      
+      // Adjust position based on instructions text length
+      yPosition = yPosition + 17 + (instructionsLines.length * 5);
       
       // Medications table
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
-      doc.text('Medications:', 14, 110);
+      doc.text('Medications:', 14, yPosition + 10);
       
+      // Prepare medications data for table
       const tableColumn = ["Medication", "Dosage", "Frequency", "Duration", "Notes"];
       const tableRows = [];
       
-      prescription.medications.forEach(med => {
+      // Ensure medications array exists and is iterable
+      const medications = Array.isArray(prescription.medications) ? prescription.medications : [];
+      medications.forEach(med => {
         const medData = [
-          med.name,
-          med.dosage,
+          med.name || '',
+          med.dosage || '',
           med.frequency || '-',
           med.duration || '-',
           med.notes || '-'
@@ -242,28 +256,46 @@ const PatientDashboard = () => {
         tableRows.push(medData);
       });
       
-      doc.autoTable({
-        startY: 115,
-        head: [tableColumn],
-        body: tableRows,
-        theme: 'grid',
-        headStyles: { fillColor: [0, 128, 128], textColor: 255 },
-        styles: { fontSize: 9 }
-      });
+      // Add table with error handling
+      try {
+        doc.autoTable({
+          startY: yPosition + 15,
+          head: [tableColumn],
+          body: tableRows,
+          theme: 'grid',
+          headStyles: { fillColor: [0, 128, 128], textColor: 255 },
+          styles: { fontSize: 9, cellPadding: 3 },
+          margin: { top: 10 }
+        });
+      } catch (tableError) {
+        // If table generation fails, add a simple text instead
+        doc.text('Medication details could not be formatted as a table.', 14, yPosition + 15);
+        console.error('Table generation error:', tableError);
+      }
       
-      // Footer
-      const finalY = doc.lastAutoTable.finalY || 200;
+      // Footer - positioned at the bottom of the page
+      const pageHeight = doc.internal.pageSize.height;
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
-      doc.text('This prescription was generated electronically from Medical Clinic records system.', 105, finalY + 20, { align: 'center' });
+      doc.text('This prescription was generated electronically from Medical Clinic records system.', 105, pageHeight - 15, { align: 'center' });
       
-      // Save PDF with patient name and date
-      const fileName = `prescription_${prescription.id}_${patient.firstName}_${patient.lastName}.pdf`;
-      doc.save(fileName);
+      // Save PDF with patient name and date - handle special characters
+      const fileName = `prescription_${prescription.id}.pdf`;
+      
+      // Use save with try-catch
+      try {
+        doc.save(fileName);
+      } catch (saveError) {
+        console.error('Error saving PDF:', saveError);
+        
+        // Alternative approach: open in new window
+        window.open(URL.createObjectURL(doc.output('blob')));
+      }
       
     } catch (err) {
       console.error('Error generating PDF:', err);
-      alert('Failed to generate PDF. Please try again later.');
+      // Show more specific error message if available
+      alert(`Failed to generate PDF: ${err.message || 'Unknown error occurred'}`);
     }
   };
   
