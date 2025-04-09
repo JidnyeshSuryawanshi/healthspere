@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doctorService, appointmentService, authService } from '../services/api';
 import AppointmentModal from './AppointmentModal';
-import SimpleModal from './SimpleModal';
 
 const DoctorsList = () => {
   const [doctors, setDoctors] = useState([]);
@@ -15,7 +14,6 @@ const DoctorsList = () => {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [formLoading, setFormLoading] = useState(false);
-  const [useSimpleModal, setUseSimpleModal] = useState(false);
   
   // Appointment form state
   const [appointmentForm, setAppointmentForm] = useState({
@@ -44,11 +42,8 @@ const DoctorsList = () => {
 
   // Handle opening the appointment form for a specific doctor
   const handleBookAppointment = (doctor) => {
-    console.log("Book appointment clicked for doctor:", doctor);
-    
     // First, set the selected doctor regardless of auth status
     setSelectedDoctor(doctor);
-    console.log("Selected doctor set:", doctor.firstName, doctor.lastName);
     
     // Reset form state
     setAppointmentForm({
@@ -62,24 +57,15 @@ const DoctorsList = () => {
     
     // Check authentication after selecting the doctor
     const currentUser = authService.getCurrentUser();
-    console.log("Current user:", currentUser);
     
     if (!currentUser) {
       setBookingError('Please log in to book an appointment');
-      console.log("Setting error: user not logged in");
     } else if (currentUser.userType !== 'patient') {
       setBookingError('Only patients can book appointments');
-      console.log("Setting error: user is not a patient, but a", currentUser.userType);
     }
     
     // Always show the form - it will display the appropriate error if needed
-    console.log("Setting showAppointmentForm to true");
     setShowAppointmentForm(true);
-    
-    // Force a re-render to ensure state updates are applied
-    setTimeout(() => {
-      console.log("Modal should be visible now. showAppointmentForm:", showAppointmentForm);
-    }, 100);
   };
   
   // Handle form input changes
@@ -178,8 +164,6 @@ const DoctorsList = () => {
         reason: appointmentForm.reason
       };
       
-      console.log('Submitting appointment with token:', localStorage.getItem('token'));
-      
       // Use the real appointment booking API
       await appointmentService.bookAppointment(appointmentData);
       
@@ -226,12 +210,6 @@ const DoctorsList = () => {
     return matchesSearch && matchesSpecialization;
   });
 
-  // Force fallback to simple modal if AppointmentModal fails
-  const toggleModalType = () => {
-    setUseSimpleModal(!useSimpleModal);
-    console.log("Switching to", useSimpleModal ? "portal modal" : "simple modal");
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -250,38 +228,6 @@ const DoctorsList = () => {
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      {/* Debug buttons */}
-      <div className="flex gap-2 mb-4">
-        <button 
-          onClick={() => {
-            console.log("Debug button clicked");
-            setShowAppointmentForm(true);
-            setSelectedDoctor(doctors[0] || {firstName: 'Test', lastName: 'Doctor', specialization: 'Debug'});
-          }}
-          className="px-4 py-2 bg-gray-200 text-gray-800 text-xs rounded"
-        >
-          Debug: Open Modal
-        </button>
-        <button 
-          onClick={toggleModalType}
-          className="px-4 py-2 bg-gray-200 text-gray-800 text-xs rounded"
-        >
-          Switch to {useSimpleModal ? "Portal Modal" : "Simple Modal"}
-        </button>
-      </div>
-      
-      {/* Debug button - remove in production */}
-      <button 
-        onClick={() => {
-          console.log("Debug button clicked");
-          setShowAppointmentForm(true);
-          setSelectedDoctor(doctors[0] || {firstName: 'Test', lastName: 'Doctor', specialization: 'Debug'});
-        }}
-        className="mb-4 px-4 py-2 bg-gray-200 text-gray-800 text-xs rounded"
-      >
-        Debug: Open Appointment Modal
-      </button>
-      
       <div className="mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="relative flex-1">
@@ -359,7 +305,6 @@ const DoctorsList = () => {
         </div>
       )}
       
-      {/* Use the AppointmentModal component instead of inline JSX */}
       <AppointmentModal
         isOpen={showAppointmentForm}
         onClose={() => setShowAppointmentForm(false)}
