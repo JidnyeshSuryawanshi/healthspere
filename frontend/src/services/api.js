@@ -109,6 +109,16 @@ export const doctorService = {
     } catch (error) {
       throw error.response ? error.response.data : { message: 'Network error' };
     }
+  },
+  
+  // Get appointment history for a specific patient
+  getPatientHistory: async (patientId) => {
+    try {
+      const response = await api.get(`/doctors/patient-history/${patientId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : { message: 'Network error' };
+    }
   }
 };
 
@@ -181,6 +191,16 @@ export const prescriptionService = {
   getPatientPrescriptions: async () => {
     try {
       const response = await api.get('/prescriptions/patient');
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : { message: 'Network error' };
+    }
+  },
+  
+  // Get a specific prescription by ID
+  getPrescriptionById: async (prescriptionId) => {
+    try {
+      const response = await api.get(`/prescriptions/public/${prescriptionId}`);
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : { message: 'Network error' };

@@ -208,4 +208,167 @@ exports.getPatientPrescriptions = (req, res) => {
       res.status(200).json({ prescriptions });
     });
   });
+};
+
+// Get prescription by ID
+exports.getPrescriptionById = (req, res) => {
+  const userId = req.user.id;
+  const prescriptionId = req.params.id;
+  
+  if (!prescriptionId) {
+    return res.status(400).json({ message: 'Prescription ID is required' });
+  }
+  
+  // Get the prescription details
+  const sql = `
+    SELECT 
+      p.id, p.diagnosis, p.instructions, p.notes, p.created_at,
+      p.doctor_id, p.patient_id,
+      d.first_name AS doctor_first_name, d.last_name AS doctor_last_name,
+      d.specialization AS doctor_specialization,
+      pt.first_name AS patient_first_name, pt.last_name AS patient_last_name,
+      a.appointment_date, a.appointment_time, a.id as appointment_id
+    FROM prescriptions p
+    JOIN doctors d ON p.doctor_id = d.id
+    JOIN patients pt ON p.patient_id = pt.id
+    JOIN appointments a ON p.appointment_id = a.id
+    WHERE p.id = ?
+  `;
+  
+  connection.query(sql, [prescriptionId], (err, results) => {
+    if (err) {
+      console.error('Error fetching prescription:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+    
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Prescription not found' });
+    }
+    
+    const prescription = results[0];
+    
+    // Get medications for the prescription
+    const medSql = `
+      SELECT name, dosage, frequency, duration, notes
+      FROM prescription_medications
+      WHERE prescription_id = ?
+    `;
+    
+    connection.query(medSql, [prescriptionId], (medErr, medResults) => {
+      if (medErr) {
+        console.error('Error fetching prescription medications:', medErr);
+        return res.status(500).json({ message: 'Server error' });
+      }
+      
+      // Transform medications data
+      const medications = medResults.map(med => ({
+        name: med.name,
+        dosage: med.dosage,
+        frequency: med.frequency,
+        duration: med.duration,
+        notes: med.notes || ''
+      }));
+      
+      // Transform data to camelCase for frontend consistency
+      const prescriptionData = {
+        id: prescription.id,
+        diagnosis: prescription.diagnosis,
+        instructions: prescription.instructions || '',
+        notes: prescription.notes || '',
+        date: prescription.created_at,
+        appointmentId: prescription.appointment_id,
+        appointmentDate: prescription.appointment_date,
+        appointmentTime: prescription.appointment_time,
+        doctorId: prescription.doctor_id,
+        doctorName: `Dr. ${prescription.doctor_first_name} ${prescription.doctor_last_name}`,
+        doctorSpecialization: prescription.doctor_specialization,
+        patientId: prescription.patient_id,
+        patientName: `${prescription.patient_first_name} ${prescription.patient_last_name}`,
+        medications: medications
+      };
+      
+      res.status(200).json({ prescription: prescriptionData });
+    });
+  });
+};
+
+// Get prescription by ID without authentication
+exports.getPublicPrescriptionById = (req, res) => {
+  const prescriptionId = req.params.id;
+  
+  if (!prescriptionId) {
+    return res.status(400).json({ message: 'Prescription ID is required' });
+  }
+  
+  // Get the prescription details
+  const sql = `
+    SELECT 
+      p.id, p.diagnosis, p.instructions, p.notes, p.created_at,
+      p.doctor_id, p.patient_id,
+      d.first_name AS doctor_first_name, d.last_name AS doctor_last_name,
+      d.specialization AS doctor_specialization,
+      pt.first_name AS patient_first_name, pt.last_name AS patient_last_name,
+      a.appointment_date, a.appointment_time, a.id as appointment_id
+    FROM prescriptions p
+    JOIN doctors d ON p.doctor_id = d.id
+    JOIN patients pt ON p.patient_id = pt.id
+    JOIN appointments a ON p.appointment_id = a.id
+    WHERE p.id = ?
+  `;
+  
+  connection.query(sql, [prescriptionId], (err, results) => {
+    if (err) {
+      console.error('Error fetching prescription:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+    
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Prescription not found' });
+    }
+    
+    const prescription = results[0];
+    
+    // Get medications for the prescription
+    const medSql = `
+      SELECT name, dosage, frequency, duration, notes
+      FROM prescription_medications
+      WHERE prescription_id = ?
+    `;
+    
+    connection.query(medSql, [prescriptionId], (medErr, medResults) => {
+      if (medErr) {
+        console.error('Error fetching prescription medications:', medErr);
+        return res.status(500).json({ message: 'Server error' });
+      }
+      
+      // Transform medications data
+      const medications = medResults.map(med => ({
+        name: med.name,
+        dosage: med.dosage,
+        frequency: med.frequency,
+        duration: med.duration,
+        notes: med.notes || ''
+      }));
+      
+      // Transform data to camelCase for frontend consistency
+      const prescriptionData = {
+        id: prescription.id,
+        diagnosis: prescription.diagnosis,
+        instructions: prescription.instructions || '',
+        notes: prescription.notes || '',
+        date: prescription.created_at,
+        appointmentId: prescription.appointment_id,
+        appointmentDate: prescription.appointment_date,
+        appointmentTime: prescription.appointment_time,
+        doctorId: prescription.doctor_id,
+        doctorName: `Dr. ${prescription.doctor_first_name} ${prescription.doctor_last_name}`,
+        doctorSpecialization: prescription.doctor_specialization,
+        patientId: prescription.patient_id,
+        patientName: `${prescription.patient_first_name} ${prescription.patient_last_name}`,
+        medications: medications
+      };
+      
+      res.status(200).json({ prescription: prescriptionData });
+    });
+  });
 }; 

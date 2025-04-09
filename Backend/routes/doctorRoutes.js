@@ -11,4 +11,7 @@ router.get('/all', doctorController.getAllDoctors);
 // Route to get patients for the currently logged-in doctor
 router.get('/my-patients', authenticateToken, doctorController.getDoctorPatients);
 
+// Route to get patient history
+router.get('/patient-history/:patientId', authenticateToken, doctorController.getPatientHistory);
+
 module.exports = router; 

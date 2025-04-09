@@ -59,4 +59,53 @@ exports.getDoctorPatients = (req, res) => {
     
     res.status(200).json({ patients });
   });
+};
+
+// Get appointment history for a specific patient
+exports.getPatientHistory = (req, res) => {
+  const doctorId = req.user.id;
+  const patientId = req.params.patientId;
+  
+  // Validate patientId
+  if (!patientId) {
+    return res.status(400).json({ message: 'Patient ID is required' });
+  }
+  
+  // SQL to get all appointments with optional prescription data
+  const sql = `
+    SELECT 
+      a.id as appointment_id,
+      a.appointment_date,
+      a.appointment_time,
+      a.reason,
+      a.status,
+      p.id as prescription_id,
+      p.diagnosis,
+      (p.id IS NOT NULL) as has_prescription
+    FROM appointments a
+    LEFT JOIN prescriptions p ON a.id = p.appointment_id
+    WHERE a.doctor_id = ? AND a.patient_id = ?
+    ORDER BY a.appointment_date DESC, a.appointment_time DESC
+  `;
+  
+  connection.query(sql, [doctorId, patientId], (err, results) => {
+    if (err) {
+      console.error('Error fetching patient history:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+    
+    // Transform data to camelCase for frontend consistency
+    const history = results.map(appointment => ({
+      id: appointment.appointment_id,
+      date: appointment.appointment_date,
+      time: appointment.appointment_time,
+      reason: appointment.reason,
+      status: appointment.status,
+      prescriptionId: appointment.prescription_id,
+      diagnosis: appointment.diagnosis,
+      hasPrescription: appointment.has_prescription === 1
+    }));
+    
+    res.status(200).json({ history });
+  });
 }; 
