@@ -249,7 +249,7 @@ exports.getPrescriptionById = (req, res) => {
     
     // Get medications for the prescription
     const medSql = `
-      SELECT name, dosage, frequency, duration, notes
+      SELECT name, dosage, frequency, duration
       FROM prescription_medications
       WHERE prescription_id = ?
     `;
@@ -264,9 +264,8 @@ exports.getPrescriptionById = (req, res) => {
       const medications = medResults.map(med => ({
         name: med.name,
         dosage: med.dosage,
-        frequency: med.frequency,
-        duration: med.duration,
-        notes: med.notes || ''
+        frequency: med.frequency || '',
+        duration: med.duration || ''
       }));
       
       // Transform data to camelCase for frontend consistency
@@ -330,7 +329,7 @@ exports.getPublicPrescriptionById = (req, res) => {
     
     // Get medications for the prescription
     const medSql = `
-      SELECT name, dosage, frequency, duration, notes
+      SELECT name, dosage, frequency, duration
       FROM prescription_medications
       WHERE prescription_id = ?
     `;
@@ -345,9 +344,8 @@ exports.getPublicPrescriptionById = (req, res) => {
       const medications = medResults.map(med => ({
         name: med.name,
         dosage: med.dosage,
-        frequency: med.frequency,
-        duration: med.duration,
-        notes: med.notes || ''
+        frequency: med.frequency || '',
+        duration: med.duration || ''
       }));
       
       // Transform data to camelCase for frontend consistency
