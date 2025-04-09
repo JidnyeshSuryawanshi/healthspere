@@ -69,6 +69,7 @@ exports.getDoctorPrescriptions = (req, res) => {
   const sql = `
     SELECT 
       p.id, p.diagnosis, p.instructions, p.notes, p.created_at,
+      pt.id AS patient_id,
       pt.first_name AS patient_first_name, pt.last_name AS patient_last_name,
       a.appointment_date, a.appointment_time
     FROM prescriptions p
@@ -112,8 +113,8 @@ exports.getDoctorPrescriptions = (req, res) => {
         medicationsByPrescription[med.prescription_id].push({
           name: med.name,
           dosage: med.dosage,
-          frequency: med.frequency,
-          duration: med.duration
+          frequency: med.frequency || '',
+          duration: med.duration || ''
         });
       });
       
@@ -121,11 +122,12 @@ exports.getDoctorPrescriptions = (req, res) => {
       const prescriptions = results.map(prescription => ({
         id: prescription.id,
         diagnosis: prescription.diagnosis,
-        instructions: prescription.instructions,
-        notes: prescription.notes,
+        instructions: prescription.instructions || '',
+        notes: prescription.notes || '',
         date: prescription.created_at,
         appointmentDate: prescription.appointment_date,
         appointmentTime: prescription.appointment_time,
+        patientId: prescription.patient_id,
         patientName: `${prescription.patient_first_name} ${prescription.patient_last_name}`,
         medications: medicationsByPrescription[prescription.id] || []
       }));

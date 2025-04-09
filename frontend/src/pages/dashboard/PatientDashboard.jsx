@@ -740,7 +740,7 @@ const PatientDashboard = () => {
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold text-gray-800">Your Appointments</h1>
               <button
-                onClick={() => setShowAppointmentForm(true)}
+                onClick={() => setActiveTab('doctors')}
                 className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 flex items-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -795,11 +795,7 @@ const PatientDashboard = () => {
                         >
                           View Prescription
                         </button>
-                      ) : (
-                        <button className="text-sm text-gray-600 hover:text-gray-800">
-                          Reschedule
-                        </button>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 ))}
@@ -914,11 +910,6 @@ const PatientDashboard = () => {
                     <p className="text-sm font-medium text-gray-500">Patient ID</p>
                     <p className="mt-1">{patient.id}</p>
                   </div>
-                </div>
-                <div className="mt-6">
-                  <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Edit Profile
-                  </button>
                 </div>
               </div>
             </div>
